@@ -1,0 +1,62 @@
+version: '3.8'
+
+networks:
+  application:
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx
+    ports:
+      - "8188:80"
+    volumes:
+      - ./application:/var/www
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - php
+      - mysql
+    networks:
+      - application
+  mysql:
+    image: mysql:8.0.21
+    command: --default-authentication-plugin=mysql_native_password
+    container_name: mysql
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - ./mysql:/var/lib/mysql
+    ports:
+      - "4306:3306"
+    environment:
+      MYSQL_DATABASE: homestead
+      MYSQL_ROOT_PASSWORD: secret
+      SERVICE_TAG: dev
+      SERVICE_NAME: mysql
+    networks:
+      - application
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /var/www
+    container_name: php
+    volumes:
+      - ./application:/var/www
+    ports:
+      - "9000:9000"
+    networks:
+      - application
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5.0.2
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - PMA_USER=root
+      - PMA_PASSWORD=secret
+    volumes:
+      - /sessions
+    ports:
+      - 8080:80
+    networks:
+      - application
