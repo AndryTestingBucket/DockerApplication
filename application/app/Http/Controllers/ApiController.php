@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SaveBeforeStripePay;
+use App\Models\Stripe;
 use App\Models\Ticket;
 use App\Providers\AddMessageApi;
 use GuzzleHttp\Exception\ClientException;
+use http\Client\Response;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AdminController;
 use App\Models\Message;
@@ -12,6 +15,7 @@ use App\Models\ServerCredential;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Events\StripePayEvent;
 
 class ApiController extends Controller
 {
@@ -147,6 +151,77 @@ class ApiController extends Controller
             Log::debug('Exception while sending payments - not save');
         }
 
+    }
+
+
+    public function stripe()
+    {
+        return view('api.stripe');
+    }
+
+    public function stripeInit(Request $request)
+    {
+
+        $amount = $request->all() ? strip_tags($request->all()['amount']) : '12' ;
+        $amount = htmlspecialchars($amount, ENT_QUOTES);
+
+        $currency = $request->all() ? strip_tags($request->all()['currency']) : 'eur';
+        $currency = htmlspecialchars($currency, ENT_QUOTES);
+
+
+
+        $key = [
+            'amount' => $amount ,
+            'currency' => $currency ,
+            'payment_method_types' => ['card']
+        ];
+
+        //return event(new StripePayEvent($key))[0];
+//        return ['clientSecret' => event(new StripePayEvent($key))[0]];
+
+
+        return response()->json(["clientSecret" => event(new StripePayEvent($key))[0]],
+                200,
+                ['Content-Type' => 'application/json; charset=UTF-8','Accept'=> 'application/json']);
+
+
+    }
+
+    public function getPaymentActionSecret()
+    {
+        return view('api.stripe');
+    }
+
+    public function stripePay()
+    {
+        return view('api.pay');
+    }
+
+    public function getStripePay($id)
+    {
+
+        if (isset($id)) {
+
+            $job = SaveBeforeStripePay::dispatch($id);
+
+            //$serretKey = $this->dispatch(new SaveBeforeStripePay($stripe));
+
+            $secretKey = Stripe::find($id->id)->client_secret;
+
+            return $secretKey;
+//            return response()->json(["clientSecret" => $secretKey],
+//                200,
+//                ['Content-Type' => 'application/json; charset=UTF-8']);
+
+        } else {
+            $secretKey = 'Ключ не существует';
+            return $secretKey;
+//            return response()->json(["clientSecret" => $secretKey],
+//                500,
+//                ['Content-Type' => 'application/json; charset=UTF-8']);
+            //показать ошибку в страйпе
+
+        }
     }
 
 }

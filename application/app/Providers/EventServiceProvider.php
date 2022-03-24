@@ -8,6 +8,8 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use Illuminate\Support\Facades\Event;
 use App\Providers\AddMessage;
 use App\Providers\AddServerCredentials;
+use App\Events\StripePayEvent;
+use App\Listeners\AddStripePayEvent;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -25,6 +27,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         AddMessageApi::class => [
             AddServerCredentialsApi::class,
+        ],
+        StripePayEvent::class => [
+            AddStripePayEvent::class,
         ],
     ];
 

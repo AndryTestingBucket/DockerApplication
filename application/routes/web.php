@@ -32,4 +32,9 @@ Route::prefix('admin')->middleware('Admin')->group(function () {
 
 Route::get('/send-email', [FeedbackController::class,'send'])->middleware('Admin');
 
-Route::post('/api' , [ApiController::class,'api'])->middleware('token')->name('api');
+Route::prefix('api')->group(function () {
+    Route::post('/' , [ApiController::class,'api'])->middleware('token')->name('api');
+    Route::get('/stripe' , [ApiController::class,'stripe'])->name('stripe');
+    Route::post('/stripe' , [ApiController::class,'stripeInit'])->name('stripeInit');
+    Route::get('/stripe/pay' , [ApiController::class,'stripePay'])->name('stripePay');
+});
